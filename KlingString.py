@@ -1,39 +1,34 @@
 import re
 
+
 class KlingString:
 
     # setupValues
     acceptableDistanceBetweenWords = 2
     abbreviationMin = 3
-
-    # input / transformation
-    needle = ''
-    needleArray = []
-    needleWordCount = ''
-
-    haystack = ''
-    haystackArray = []
-    haystackWordCount = 0
-    haystackMatches = []
-
-    # results / output
-    results = []
-    occurrences = 0
-    accuracy = 0
-    averageDistanceBetweenWords = 0
     baseScore = 25
-
     maxScore = 5
+    missingWordConstant = 2
+
+
+
 
     def __init__(self, needle, haystack):
         #setup
         self.needle = needle
         self.needleArray = re.sub(r'\s+', ' ', self.needle.lower()).split(' ')
         self.needleWordCount = len(self.needleArray)
+        self.haystackMatches = []
 
         self.haystack = haystack
         self.haystackArray = re.sub(r'\s+', ' ', self.haystack.lower(), flags=re.MULTILINE).split(' ')
         self.haystackWordCount = len(self.haystackArray)
+
+        # results / output
+        self.results = []
+        self.occurrences = 0
+        self.accuracy = 0
+        self.averageDistanceBetweenWords = 0
 
         # the max number of transformations to remain a valid candidate
         self.accuracy = self.needleWordCount * 2
@@ -49,8 +44,6 @@ class KlingString:
     def levenschtein(self, string1, string2):
         xSize = len(string1) + 1
         ySize = len(string2) + 1
-
-
         grid = [[0 for col in range(ySize)] for row in range(xSize)]
 
         for x in range(xSize):
@@ -78,7 +71,7 @@ class KlingString:
 
         return grid[xSize-1][ySize-1]
 
-    #check for exact matche of the full string and set a count of exact matches found
+    # check for exact matche of the full string and set a count of exact matches found
     def basic_match_count(self):
         self.occurrences = self.haystack.count(self.needle)
 
@@ -157,6 +150,7 @@ class KlingString:
 
                 # start by finding the first word in the search phrase
                 first_position = needle_array_copy.index(self.haystackMatches[i]['search'])
+
                 if first_position == 0:
                     direction_forward = True
                     needle_array_copy[first_position] = ''
@@ -174,7 +168,7 @@ class KlingString:
                         set = False
                         index = i + x
 
-                        #check if the next is our word
+                        # check if the next is our word
                         if index < len(self.haystackMatches) \
                                 and needle_array_copy[x] == self.haystackMatches[index]['search'] \
                                 and abs(self.haystackMatches[i]['position'] - self.haystackMatches[index]['position']) <= self.acceptableDistanceBetweenWords \
@@ -184,7 +178,8 @@ class KlingString:
                             needle_array_copy[x] = ''
 
                         else:
-                            #look forward
+
+                            # look forward
                             if index < len(self.haystackMatches) and self.haystackMatches[index]['search'] in needle_array_copy \
                                     and not self.haystackMatches[index]['paired'] \
                                     and abs(self.haystackMatches[i]['position'] - self.haystackMatches[index]['position']) <= self.acceptableDistanceBetweenWords:
@@ -197,8 +192,7 @@ class KlingString:
                             # walk backwards through the matches sicne we may have started earlier
                             else:
                                 direction_forward = False
-
-                                for index in range(i-1, 0, -1):
+                                for index in range(i-1, -1, -1):
                                     if index < len(self.haystackMatches) and not self.haystackMatches[index]['paired']:
                                         if self.haystackMatches[index]['search'] in needle_array_copy:
                                             exists = needle_array_copy.index(self.haystackMatches[index]['search'])
@@ -223,7 +217,7 @@ class KlingString:
                             result['levenschtein'] += self.haystackMatches[set]['levenschtein']
                             result['abbreviated'] += self.haystackMatches[set]['abbreviated']
 
-                            if(direction_forward):
+                            if direction_forward:
                                 phrase_found.append(self.haystackMatches[set]['string_found'])
                                 position_order.append(self.haystackMatches[set]['position'])
                             else:
@@ -241,18 +235,17 @@ class KlingString:
                     else:
                         distances.append(0)
 
-
                     result['words_found'] = individual_string_matches
                     result['max_distance'] = max(distances)
                     result['avg_distance'] = sum(distances) / len(distances)
                     result['output'] = ' '.join(phrase_found)
-                    result['score'] = self.baseScore - abs(result['transformations'] + result['avg_distance'])
-
+                    result['score'] = self.baseScore - abs(result['transformations'] + result['avg_distance']
+                                                           + ((self.needleWordCount - result['words_found']) * self.missingWordConstant))
                     result['base_probability'] = 0
 
                     self.results.append(result)
 
-        #normalize the  probability that this is
+        # normalize the probability that to find best match
         if len(self.results) > 0:
             totalScore = 0.
 
@@ -277,17 +270,37 @@ class KlingString:
 
 
 
-search = "Daniel Raymond Klingman"
+# example 1
+
+search_for = "Daniel Raymond Klingman"
 blob = "hi i am Dan Raymond Klingman and I would like to test my name / string matching algorith. " \
-       "If i put my name as Klingman Daniel and Daniel R Klingman it should still find all 3 instances."
+       "If i put my name as Klingman Daniel and Daniel R Klingman it should still find all 3 instances. It may also help find doniel klongmen"
 
-a = KlingString(search,blob)
-a.transformative_position_search()
-print a.getBest()
+search = KlingString(search_for,blob)
+search.transformative_position_search()
+print '\n**Test 1**'
+print '\nBest'
+print search.getBest()
 
-for i in range(len(a.results)):
-    print a.results[i]
+print '\nAll Results'
+for i in range(len(search.results)):
+    print search.results[i]
 
+# example 2
+search_for2 = "Marriage Certificate"
+blob2 = "This is the Certificate of Marriage " \
+        "This is a valid morriage certigicate"
+
+search2 = KlingString(search_for2,blob2)
+search2.transformative_position_search()
+
+print '\nTest 2'
+print 'Best'
+print search2.getBest()
+
+print '\nAll Results'
+for i in range(len(search2.results)):
+    print search2.results[i]
 
 
 # a.basic_match_count()
