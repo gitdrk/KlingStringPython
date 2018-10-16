@@ -10,9 +10,6 @@ class KlingString:
     maxScore = 5
     missingWordConstant = 2
 
-
-
-
     def __init__(self, needle, haystack):
         #setup
         self.needle = needle
@@ -247,18 +244,18 @@ class KlingString:
 
         # normalize the probability that to find best match
         if len(self.results) > 0:
-            totalScore = 0.
+            total_score = 0.
 
             for i in range(len(self.results)):
-                totalScore += self.results[i]['score']
+                total_score += self.results[i]['score']
 
             for i in range(len(self.results)):
-                self.results[i]['base_probability'] = self.results[i]['score'] / totalScore
+                self.results[i]['base_probability'] = self.results[i]['score'] / total_score
 
-    def getResults(self):
+    def get_results(self):
         return self.results
 
-    def getBest(self):
+    def get_best(self):
         best = {}
         for i in range(len(self.results)):
             if best == {}:
@@ -268,25 +265,27 @@ class KlingString:
                     best = self.results[i]
         return best
 
+# Examples
 
+# ex. 1
 
-# example 1
+search_for = "Daniel Rayomnd Klingman"
+blob = "hi I am Daniel Rayomnd Klingman and I would like to test my name. My legal name may be Klingman Daniel " \
+       "If I put my name as Dan Klongmen and Daniel R Klingman it should still find all 3 instances. " \
+       "It may also help find doniel klongmen"
 
-search_for = "Daniel Raymond Klingman"
-blob = "hi i am Dan Raymond Klingman and I would like to test my name / string matching algorith. " \
-       "If i put my name as Klingman Daniel and Daniel R Klingman it should still find all 3 instances. It may also help find doniel klongmen"
 
 search = KlingString(search_for,blob)
 search.transformative_position_search()
 print '\n**Test 1**'
 print '\nBest'
-print search.getBest()
+print search.get_best()
 
 print '\nAll Results'
 for i in range(len(search.results)):
     print search.results[i]
 
-# example 2
+# ex. 2
 search_for2 = "Marriage Certificate"
 blob2 = "This is the Certificate of Marriage " \
         "This is a valid morriage certigicate"
@@ -296,14 +295,8 @@ search2.transformative_position_search()
 
 print '\nTest 2'
 print 'Best'
-print search2.getBest()
+print search2.get_best()
 
 print '\nAll Results'
 for i in range(len(search2.results)):
     print search2.results[i]
-
-
-# a.basic_match_count()
-# print a.occurrences
-#
-
