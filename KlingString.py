@@ -21,6 +21,7 @@ class KlingString:
     occurrences = 0
     accuracy = 0
     averageDistanceBetweenWords = 0
+    baseScore = 25
 
     maxScore = 5
 
@@ -45,7 +46,6 @@ class KlingString:
             return 1
         return 2
 
-    # I would normally import this from a library but decided to try my hand at it
     def levenschtein(self, string1, string2):
         xSize = len(string1) + 1
         ySize = len(string2) + 1
@@ -246,59 +246,34 @@ class KlingString:
                     result['max_distance'] = max(distances)
                     result['avg_distance'] = sum(distances) / len(distances)
                     result['output'] = ' '.join(phrase_found)
-                    result['score'] = result['transformations'] \
-                                        + result['avg_distance']
+                    result['score'] = self.baseScore - abs(result['transformations'] + result['avg_distance'])
+
                     result['base_probability'] = 0
 
                     self.results.append(result)
 
         #normalize the  probability that this is
         if len(self.results) > 0:
-            base = 100
             totalScore = 0.
 
             for i in range(len(self.results)):
-                totalScore += base -  self.results[i]['score']
+                totalScore += self.results[i]['score']
 
             for i in range(len(self.results)):
-                self.results[i]['normalized_score'] = (base - self.results[i]['score']) / totalScore
+                self.results[i]['base_probability'] = self.results[i]['score'] / totalScore
 
-    def getBestMatch(self):
-        
+    def getResults(self):
+        return self.results
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def getBest(self):
+        best = {}
+        for i in range(len(self.results)):
+            if best == {}:
+                best = self.results[i]
+            else:
+                if self.results[i]['base_probability'] > best['base_probability']:
+                    best = self.results[i]
+        return best
 
 
 
@@ -308,12 +283,10 @@ blob = "hi i am Dan Raymond Klingman and I would like to test my name / string m
 
 a = KlingString(search,blob)
 a.transformative_position_search()
+print a.getBest()
 
 for i in range(len(a.results)):
     print a.results[i]
-#
-# for i in range(len(a.haystackMatches)):
-#     print a.haystackMatches[i]
 
 
 
